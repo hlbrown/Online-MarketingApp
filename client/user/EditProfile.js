@@ -10,6 +10,7 @@ import { makeStyles } from '@material-ui/core/styles'
 import auth from './../auth/auth-helper'
 import {read, update} from './api-user.js'
 import {Redirect} from 'react-router-dom'
+import { FormControlLabel } from '@material-ui/core'
 
 const useStyles = makeStyles(theme => ({
   card: {
@@ -69,10 +70,12 @@ export default function EditProfile({ match }) {
   }, [match.params.userId])
 
   const clickSubmit = () => {
+    const jwt = auth.isAuthenticated()
     const user = {
       name: values.name || undefined,
       email: values.email || undefined,
-      password: values.password || undefined
+      password: values.password || undefined,
+      seller: values.seller || undefined
     }
     update({
       userId: match.params.userId
@@ -82,12 +85,17 @@ export default function EditProfile({ match }) {
       if (data && data.error) {
         setValues({...values, error: data.error})
       } else {
-        setValues({...values, userId: data._id, redirectToProfile: true})
+        auth.updateUser(data, ()=>{
+          setValues({...values, userId: data._id, redirectToProfile:true})
+        })
       }
     })
   }
   const handleChange = name => event => {
     setValues({...values, [name]: event.target.value})
+  }
+  const handleCheck = (event, checked) => {
+    setValues({...values, 'seller': checked})
   }
 
     if (values.redirectToProfile) {
@@ -102,6 +110,16 @@ export default function EditProfile({ match }) {
           <TextField id="name" label="Name" className={classes.textField} value={values.name} onChange={handleChange('name')} margin="normal"/><br/>
           <TextField id="email" type="email" label="Email" className={classes.textField} value={values.email} onChange={handleChange('email')} margin="normal"/><br/>
           <TextField id="password" type="password" label="Password" className={classes.textField} value={values.password} onChange={handleChange('password')} margin="normal"/>
+          <Typography variant="subtitle1" className={classes.subheading}>
+            Seller Account
+          </Typography>
+          <FormControlLabel
+          control={
+          <Switch 
+            checked={values.seller} 
+            onChange={handleCheck}/>}
+            label={values.seller? 'Active' : 'Inactive'}
+            />
           <br/> {
             values.error && (<Typography component="p" color="error">
               <Icon color="error" className={classes.error}>error</Icon>
